@@ -28,11 +28,11 @@ pub struct NameQuestion {
     team_name: String,
     qn_num: i32,
 }
-	
+    
 #[derive(Serialize)]
 struct TemplateContext {
     top_scores: Vec<NameScore>,
-	recent_answers: Vec<NameQuestion>,
+    recent_answers: Vec<NameQuestion>,
 }
 
 const DB_FILE: &'static str = "scores.db";
@@ -58,20 +58,20 @@ pub fn top_scores(conn: &State<DbConn>, n: usize) -> Vec<NameScore> {
 pub fn recent_answers(conn:&State<DbConn>, n: usize) -> Vec<NameQuestion> {
     let conn = conn.lock().expect("db connection lock");
     let mut stmt = 
-		conn.prepare("SELECT team_name, qn_num
-			      FROM quiz_entry WHERE qn_num = 
+        conn.prepare("SELECT team_name, qn_num
+                  FROM quiz_entry WHERE qn_num = 
                   (SELECT MAX(qn_num) from quiz_entry)
-				  ORDER BY rowid DESC"
+                  ORDER BY rowid DESC"
         ).unwrap();
-	
-	let entries = stmt.query_map(&[], |row| {
-			NameQuestion {
-				team_name: row.get(0),
-				qn_num: row.get(1),
-			}
-	}).unwrap().map(|entry| entry.unwrap()).take(n).collect();
-	
-	entries
+    
+    let entries = stmt.query_map(&[], |row| {
+            NameQuestion {
+                team_name: row.get(0),
+                qn_num: row.get(1),
+            }
+    }).unwrap().map(|entry| entry.unwrap()).take(n).collect();
+    
+    entries
 }
 
 // IF NOT EXISTS is generating a syntax error
@@ -93,7 +93,7 @@ pub fn recent_answers(conn:&State<DbConn>, n: usize) -> Vec<NameQuestion> {
 fn index(conn: State<DbConn>) -> Template {
     let context = TemplateContext {
         top_scores: top_scores(&conn, 10),
-		recent_answers: recent_answers(&conn, 5),
+        recent_answers: recent_answers(&conn, 5),
     };
     
     Template::render("index", &context)   
@@ -102,13 +102,13 @@ fn index(conn: State<DbConn>) -> Template {
 #[post("/score/<team_name>/<qn_num>/<score>")]
 fn post_score(conn: State<DbConn>, team_name: &str, qn_num: i32, score: i32) -> String {
     
-	conn.lock()
+    conn.lock()
     .expect("db connection lock")
     .execute("INSERT INTO quiz_entry (team_name, qn_num, score)
-			 VALUES (?1, ?2, ?3)",
-			 &[&team_name, &qn_num, &score]).unwrap();	
-	
-	format!("posted {}, {}, {}", team_name, qn_num, score)
+             VALUES (?1, ?2, ?3)",
+             &[&team_name, &qn_num, &score]).unwrap();  
+    
+    format!("posted {}, {}, {}", team_name, qn_num, score)
 }
 
 fn main() {
