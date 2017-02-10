@@ -105,15 +105,15 @@ fn post_score(conn: State<DbConn>, team_name: &str, qn_num: i32, score: i32) -> 
 	conn.lock()
     .expect("db connection lock")
     .execute("INSERT INTO quiz_entry (team_name, qn_num, score)
-				 VALUES (?1, ?2, ?3)",
-				 &[&team_name, &qn_num, &score]).unwrap();	
+			 VALUES (?1, ?2, ?3)",
+			 &[&team_name, &qn_num, &score]).unwrap();	
 	
 	format!("posted {}, {}, {}", team_name, qn_num, score)
 }
 
 fn main() {
     
-	let conn = Connection::open(DB_FILE).unwrap();
+    let conn = Connection::open(DB_FILE).unwrap();
      
     rocket::ignite()
         .manage(Mutex::new(conn))
