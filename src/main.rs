@@ -10,6 +10,7 @@ extern crate rusqlite;
 
 use std::sync::Mutex;
 use rocket::{State};
+use rocket::http::Status;
 use rocket_contrib::Template;
 use rusqlite::{Connection};
 
@@ -100,15 +101,21 @@ fn index(conn: State<DbConn>) -> Template {
 }
 
 #[post("/score/<team_name>/<qn_num>/<score>")]
-fn post_score(conn: State<DbConn>, team_name: &str, qn_num: i32, score: i32) -> String {
+fn post_score(conn: State<DbConn>, team_name: &str, 
+              qn_num: i32, score: i32) -> Result<&'static str, Status> {
     
-    conn.lock()
-    .expect("db connection lock")
-    .execute("INSERT INTO quiz_entry (team_name, qn_num, score)
+    let result = conn.lock()
+      	.expect("db connection lock")
+        .execute("INSERT INTO quiz_entry (team_name, qn_num, score)
              VALUES (?1, ?2, ?3)",
-             &[&team_name, &qn_num, &score]).unwrap();  
-    
-    format!("posted {}, {}, {}", team_name, qn_num, score)
+             &[&team_name, &qn_num, &score]);
+
+    println!("{:?}", result);
+
+    match result {
+        Ok(_)  => Ok("score posted"),
+        Err(_) => Err(Status::InternalServerError),
+    }
 }
 
 fn main() {
